@@ -1,71 +1,190 @@
-# ASCII thunderstorm
+# ASCII Thunderstorm
 
-A runnable reconstruction of storm.py shown in the supplied 20-second recording.
-Original on-screen credit: @leonario23, 2026.
+A terminal-based ASCII thunderstorm animation reconstructed from a 20-second
+video recording. Run it in a Windows terminal to see animated clouds, rain, and
+lightning.
 
-## Run on Windows
+## Table of Contents
 
-Requires Python 3.10 or newer and internet access for the first NumPy installation.
-Open Windows Terminal / PowerShell in this folder. Maximize the terminal and reduce
-its font size (Ctrl + minus) until it has at least 121 columns and 77 rows.
-A dark background and a monospaced font such as Consolas best match the video.
+- [About](#about)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Security](#security)
+- [How to Contribute?](#how-to-contribute)
+- [What's Next?](#whats-next)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Author](#author)
 
-Run:
+## About
 
-    .\run.cmd
+ASCII Thunderstorm recreates the central storm effect visible in the source
+recording as a text animation. It is a reconstruction, not a verbatim extraction:
+parts of the original source were cropped out of the recording and had to be
+approximated. The animation aims to resemble the visible effect; pixel-for-pixel
+fidelity is not guaranteed.
 
-The launcher creates a local .venv, installs NumPy, and plays the animation for
-20 seconds. It leaves the terminal open afterward. Ctrl+C stops playback.
-For a smaller window (different proportions):
+The recording's status counters, ground decorations and splashes, timer, and
+code editor are not part of this reconstruction.
 
-    .\run.cmd --fit
+## Features
 
-To repeat:
+- Animated cloud, rain, and lightning effects rendered as terminal characters.
+- Real-time playback at 30 frames per second for 20 seconds by default.
+- Optional loop playback and fitting to a smaller terminal.
+- Still-frame output for saving or inspecting a chosen point in the animation.
+- Windows ANSI terminal support and restoration of the cursor and terminal
+  screen when playback ends.
+- A default-resolution terminal size check to help prevent wrapped output.
 
-    .\run.cmd --loop
+## Tech Stack
 
-Manual installation, if you prefer:
+- Python 3.10 or newer
+- NumPy 2.x
+- Windows Command Prompt, PowerShell, or Windows Terminal for the provided
+  launcher and interactive playback
 
-    py -3 -m venv .venv
-    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-    .\.venv\Scripts\python.exe storm.py
+## Architecture
 
-If Python is already available as `python` but `py` is unavailable, substitute
-`python` for `py -3` in the manual setup.
+The animation is generated locally by `storm.py`:
 
-To save a still frame:
+1. NumPy arrays represent the terminal grid and calculate cloud density and
+   lighting using layered noise.
+2. A rain simulation advances raindrop positions each frame.
+3. Lightning strikes are generated from seeded paths and composited over the
+   scene at the configured strike times.
+4. A character brightness ramp converts the scene into a grid of text.
+5. The playback loop writes each frame to the terminal at the target frame rate.
 
-    .\.venv\Scripts\python.exe storm.py --snapshot 10 > frame.txt
+The random-number generator is seeded, and the storm uses a fixed resolution of
+120 columns by 76 rows unless `--fit` is selected.
 
-## Fidelity and reconstruction notes
+## Project Structure
 
-This is not a complete verbatim extraction. The recording crops the right side
-of the editor; missing text cannot be recovered from those pixels. The readable
-functions and constants were transcribed, with these reconstructed portions:
+```text
+ascii-storm/
+├── README.md
+├── requirements.txt
+├── run.cmd
+└── storm.py
+```
 
-- The end of the character brightness ramp.
-- Rightmost PUFFS entries and tuple values.
-- The cloud turbulence coordinates/time rate and the lighting expression tail.
-- Clipped expression endings in interpolation, rain intensity, shading, and BOLTS.
+- `storm.py` — storm simulation, frame rendering, playback, and command-line
+  options.
+- `requirements.txt` — NumPy dependency.
+- `run.cmd` — Windows launcher that creates a local virtual environment,
+  installs dependencies, runs the animation, and pauses afterward.
 
-The visible resolution (120 x 76), 30 fps, seed 23, 900 raindrops, strike times
-8.30 / 12.05 / 15.55 seconds, and 20-second duration are retained.
-The visible source creates forks but renders only each bolt's main path; this
-behavior is retained. The first flash pulse has zero amplitude in the visible
-formula; that formula is retained too.
+## Getting Started
 
-Added for local playback: real-time frame pacing, Windows ANSI support, cursor
-restoration, alternate screen, terminal size checks, --fit, --loop, --seconds,
-and --snapshot. Smaller terminals are rejected by default to prevent line wrapping.
+### Prerequisites
 
-The video's status counters, ground decoration/splashes, timer, and code editor
-are not generated by the source visible in the recording. Those overlays are
-not included. The animation should resemble the central effect, but an identical
-pixel-for-pixel result cannot be promised from the cropped source.
+- Python 3.10 or newer.
+- Internet access for the initial NumPy installation.
+- For the default animation size, a terminal with at least 121 columns and
+  77 rows. Maximize the terminal or reduce its font size if needed.
 
-## Validation
+A dark terminal background and a monospaced font such as Consolas are
+recommended.
 
-Executed all 600 animation frames with Python 3.13 and NumPy; verified each frame
-has 76 rows of 120 characters, including all three lightning windows. Inspected
-a rendered 10-second frame. Interactive Windows Terminal playback and first-run
-package installation were not exercised by this validation.
+### Run on Windows
+
+Open a terminal in the project folder and run:
+
+```powershell
+.\run.cmd
+```
+
+The launcher creates `.venv`, installs the requirements, and starts playback.
+Press `Ctrl+C` to stop.
+
+To fit the animation to a smaller terminal:
+
+```powershell
+.\run.cmd --fit
+```
+
+To repeat the animation:
+
+```powershell
+.\run.cmd --loop
+```
+
+### Manual setup
+
+If you prefer not to use the launcher:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe storm.py
+```
+
+If the `py` launcher is unavailable but `python` is installed, use
+`python -m venv .venv` for the first command.
+
+Save a still frame at 10 seconds:
+
+```powershell
+.\.venv\Scripts\python.exe storm.py --snapshot 10 > frame.txt
+```
+
+## Configuration
+
+Command-line options are available through `storm.py` and are passed through by
+`run.cmd`:
+
+| Option | Description |
+| --- | --- |
+| `--seconds SECONDS` | Set playback duration in seconds (default: `20`). |
+| `--loop` | Repeat playback until interrupted. |
+| `--fit` | Fit the animation to a smaller terminal; this changes its proportions. |
+| `--snapshot SECONDS` | Print one still frame at the specified time without ANSI playback controls. |
+
+For example, run a 12-second animation:
+
+```powershell
+.\.venv\Scripts\python.exe storm.py --seconds 12
+```
+
+## Security
+
+The application does not require credentials or contact a service during
+playback. Internet access is needed to install NumPy when setting up the
+environment. Install dependencies from the included `requirements.txt` and
+review the source before running it if you need to verify its behavior.
+
+## How to Contribute?
+
+Contributions can improve the reconstruction, documentation, or playback
+experience. Before proposing a change:
+
+1. Keep changes focused and explain any intentional change to the animation.
+2. Run the program or use `--snapshot` to check the affected behavior.
+3. Update this README if commands, options, or requirements change.
+4. Share your change through the project's hosting platform, if applicable.
+
+## What's Next?
+
+Possible future improvements include adding automated checks for frame
+dimensions and command-line validation, and documenting or refining the
+approximated details of the source reconstruction.
+
+## License
+
+No license is specified in the files included with this project. Contact the
+project owner for permission before redistributing or reusing the code.
+
+## Acknowledgements
+
+The source recording displays the credit `@leonario23` (2026). This
+reconstruction uses that recording as its visual reference; portions obscured by
+the editor crop are approximations.
+
+## Author
+
+The author of this reconstruction is not identified in the project files.
