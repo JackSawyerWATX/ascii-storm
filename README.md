@@ -187,4 +187,4 @@ the editor crop are approximations.
 
 ## Author
 
-The author of this reconstruction is not identified in the project files.
+Jack Sawyer
